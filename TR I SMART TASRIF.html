@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I-SMART TASRIF - Aplikasi Pembelajaran Interaktif</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto_Naskh_Arabic:wght@400..700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================================================
+           1. BERSIH & IDENTITI VISUAL (UI/UX) - CSS VARIABLES & RESET
+           ========================================================================== */
+        :root {
+            --sky-blue: #7cd0ff;
+            --cloud-white: #ffffff;
+            --grass-green: #5cdb5c;
+            --hill-green: #3cb83c;
+            --sun-yellow: #ffde59;
+            --text-dark: #2c3e50;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --primary-accent: #ff6b6b;
+            --secondary-accent: #4dadf7;
+            --font-arabic: 'Noto Naskh Arabic', 'Amiri', serif;
+            --font-sans: 'Fredoka', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--text-dark);
+            background: linear-gradient(to bottom, var(--sky-blue) 0%, #e0f2fe 70%, var(--grass-green) 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Elemen Latar Belakang Kartun (Awan & Bukit) */
+        .background-decorations {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .cloud {
+            position: absolute;
+            background: var(--cloud-white);
+            border-radius: 100px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+            animation: float-cloud 25s linear infinite;
+            opacity: 0.85;
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: var(--cloud-white);
+            border-radius: 50%;
+        }
+        .cloud-1 { width: 150px; height: 50px; top: 10%; left: -150px; animation-delay: 0s; }
+        .cloud-1::before { width: 70px; height: 70px; top: -35px; left: 20px; }
+        .cloud-1::after { width: 50px; height: 50px; top: -25px; left: 75px; }
+
+        .cloud-2 { width: 200px; height: 60px; top: 25%; left: -200px; animation-duration: 35s; animation-delay: -10s; }
+        .cloud-2::before { width: 90px; height: 90px; top: -45px; left: 25px; }
+        .cloud-2::after { width: 70px; height: 70px; top: -30px; left: 95px; }
+
+        @keyframes float-cloud {
+            0% { left: -200px; }
+            100% { left: 100vw; }
+        }
+
+        .hills {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            background: var(--hill-green);
+            border-top-left-radius: 50% 30px;
+            border-top-right-radius: 50% 30px;
+            z-index: 1;
+            transform: scaleX(1.1);
+        }
+
+        /* ==========================================================================
+           2. SPA MANAGEMENT (PENGURUSAN SKRIN)
+           ========================================================================== */
+        .screen {
+            display: none;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            flex-grow: 1;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typography & Global Components */
+        h1, h2, h3, h4 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .arabic-text {
+            font-family: var(--font-arabic);
+            direction: rtl;
+            font-size: 1.8rem;
+            line-height: 1.6;
+        }
+
+        .btn-main {
+            background: var(--sun-yellow);
+            color: var(--text-dark);
+            border: 4px solid var(--text-dark);
+            border-radius: 20px;
+            padding: 15px 40px;
+            font-family: var(--font-sans);
+            font-size: 1.4rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 0 var(--text-dark);
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-main:hover {
+            transform: translateY(2px);
+            box-shadow: 0 6px 0 var(--text-dark);
+            background: #ffe682;
+        }
+        .btn-main:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 var(--text-dark);
+        }
+
+        .btn-back {
+            align-self: flex-start;
+            background: var(--primary-accent);
+            color: white;
+            border: 2px solid var(--text-dark);
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-family: var(--font-sans);
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-dark);
+            margin-bottom: 20px;
+            transition: all 0.1s;
+        }
+        .btn-back:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--text-dark);
+        }
+
+        /* Navigasi Atas */
+        .header-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* ==========================================================================
+           3. SKRIN 1: SPLASH SCREEN / SKRIN MULA
+           ========================================================================== */
+        #splash-screen {
+            text-align: center;
+            height: 100vh;
+        }
+
+        .splash-container {
+            position: relative;
+            padding: 40px;
+            background: var(--card-bg);
+            border: 5px solid var(--text-dark);
+            border-radius: 30px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .splash-title {
+            font-size: 3rem;
+            color: #2b78c5;
+            margin-bottom: 40px;
+            font-weight: 800;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px rgba(0,0,0,0.1);
+        }
+
+        /* Awan dhomir yang mengelilingi tajuk */
+        .dhomir-floating-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .dhomir-tag {
+            background: #fff;
+            border: 2px solid #555;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #e67e22;
+            box-shadow: 0 4px 0 #555;
+            animation: bounce-slow 3s ease-in-out infinite alternate;
+        }
+        .dhomir-tag:nth-child(even) { animation-delay: 0.5s; }
+        .dhomir-tag:nth-child(3n) { animation-delay: 1s; }
+
+        @keyframes bounce-slow {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        /* ==========================================================================
+           4. SKRIN 2: MENU UTAMA (القائمة الرئيسية)
+           ========================================================================== */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .menu-card {
+            background: var(--cloud-white);
+            border: 4px solid var(--text-dark);
+            border-radius: 25px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 10px 0 var(--text-dark);
+            transition: all 0.15s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 0 var(--text-dark);
+        }
+        .menu-card:active {
+            transform: translateY(10px);
+            box-shadow: 0 0 0 var(--text-dark);
+        }
+
+        .menu-card .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .menu-card h3 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+
+        .menu-card .arabic-title {
+            font-size: 2rem;
+            color: #2980b9;
+            margin-top: 5px;
+        }
+
+        /* ==========================================================================
+           5. MODUL NOTA (الملاحظات) & SUB-MENU NOTA
+           ========================================================================== */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+        @media(max-width: 600px) { .notes-grid { grid-template-columns: 1fr; } }
+
+        .note-category-btn {
+            background: white;
+            border: 3px solid var(--text-dark);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0 var(--text-dark);
+            transition: all 0.1s;
+        }
+        .note-category-btn:active { transform: translateY(6px); box-shadow: 0 0 0; }
+
+        /* Kandungan Paparan Nota Dinamik */
+        .content-box {
+            background: var(--card-bg);
+            border: 4px solid var(--text-dark);
+            border-radius: 25px;
+            padding: 25px;
+            width: 100%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        /* Kad Dhomir Interaktif */
+        .dhomir-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .dhomir-interactive-card {
+            background: white;
+            border: 3px solid var(--text-dark);
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 5px 0 var(--text-dark);
+        }
+
+        .dhomir-main-info {
+            text-align: center;
+            margin-bottom: 12px;
+            width: 100%;
+            border-bottom: 2px dashed #ccc;
+            padding-bottom: 8px;
+        }
+
+        .card-tabs {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 6px 4px;
+            font-size: 0.9rem;
+            border: 2px solid var(--text-dark);
+            border-radius: 8px;
+            cursor: pointer;
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        .tab-btn.active {
+            background: var(--sun-yellow);
+        }
+
+        .tab-display-value {
+            margin-top: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #27ae60;
+            min-height: 40px;
+            text-align: center;
+        }
+
+        /* Jadual Konvensional untuk Fi'il */
+        .tasrif-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            direction: rtl;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--text-dark);
+        }
+        .tasrif-table th, .tasrif-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        .tasrif-table th {
+            background-color: var(--secondary-accent);
+            color: white;
+        }
+        .tasrif-table tr:nth-child(even) { background-color: #f9f9f9; }
+
+        .amr-example {
+            background: #eef9ff;
+            border-right: 5px solid var(--secondary-accent);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            direction: rtl;
+        }
+
+        /* ==========================================================================
+           6. MODUL VIDEO (الفيديو التعليمي)
+           ========================================================================== */
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            width: 100%;
+            background: #000;
+            border: 4px solid var(--text-dark);
+            border-radius: 20px;
+            box-shadow: 0 8px 0 var(--text-dark);
+        }
+        .video-wrapper iframe, .video-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ==========================================================================
+           7. MODUL AKTIVITI/KUIS INTERAKTIF (الأنشطة)
+           ========================================================================== */
+        .level-selection-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .level-btn {
+            background: white;
+            border: 3px solid var(--text-dark);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 var(--text-dark);
+            transition: all 0.1s;
+        }
+        .level-btn:hover { background: #fafafa; }
+        .level-btn:active { transform: translateY(6px); box-shadow: 0 0 0; }
+        .level-btn h3 { margin: 0; }
+
+        /* Arena Kuiz */
+        .quiz-container {
+            width: 100%;
+            background: white;
+            border: 4px solid var(--text-dark);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 8px 0 var(--text-dark);
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .question-box {
+            background: #f7f9fa;
+            border: 2px dashed #bdc3c7;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid var(--text-dark);
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 var(--text-dark);
+            transition: all 0.1s;
+            text-align: center;
+        }
+        .option-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0;
+        }
+
+        /* Halaman Penutup Kuiz */
+        .quiz-result-box {
+            text-align: center;
+            padding: 30px;
+        }
+        .score-circle {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: var(--sun-yellow);
+            border: 5px solid var(--text-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin: 20px auto;
+            box-shadow: 0 6px 0 var(--text-dark);
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        /* Feedback Visual Serta-merta (Betul/Salah) */
+        .correct-flash {
+            animation: flash-green 0.5s ease;
+        }
+        .incorrect-flash {
+            animation: flash-red 0.5s ease;
+        }
+
+        @keyframes flash-green {
+            0%, 100% { background-color: white; }
+            50% { background-color: #2ecc71; color: white; }
+        }
+        @keyframes flash-red {
+            0%, 100% { background-color: white; }
+            50% { background-color: #e74c3c; color: white; }
+        }
+
+        /* Footer Khas Penyelamat Kedudukan Bukit */
+        .footer-space {
+            height: 130px;
+            width: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-decorations">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+    </div>
+
+    <section id="splash-screen" class="screen active">
+        <div class="splash-container">
+            <h1 class="splash-title">I-SMART TASRIF</h1>
+            
+            <div class="dhomir-floating-container">
+                <div class="dhomir-tag ar-text">هُوَ</div>
+                <div class="dhomir-tag ar-text">هِيَ</div>
+                <div class="dhomir-tag ar-text">أَنْتَ</div>
+                <div class="dhomir-tag ar-text">أَنْتُمْ</div>
+                <div class="dhomir-tag ar-text">نَحْنُ</div>
+            </div>
+
+            <button class="btn-main" onclick="navigateTo('main-menu-screen')">START</button>
+        </div>
+    </section>
+
+
+    <section id="main-menu-screen" class="screen">
+        <h2 style="color:#fff; font-size: 2.2rem; text-shadow: 2px 2px var(--text-dark);">القائمة الرئيسية</h2>
+        <h3 style="color:var(--text-dark); margin-bottom:30px;">Sila Pilih Modul Pembelajaran</h3>
+
+        <div class="menu-grid">
+            <div class="menu-card" onclick="navigateTo('notes-menu-screen')">
+                <div class="icon">📚</div>
+                <h3>Nota Pembelajaran</h3>
+                <div class="arabic-title ar-text">الملاحظات</div>
+            </div>
+            <div class="menu-card" onclick="navigateTo('video-screen')">
+                <div class="icon">🎬</div>
+                <h3>Video Pengajaran</h3>
+                <div class="arabic-title ar-text">الفيديو التعليمي</div>
+            </div>
+            <div class="menu-card" onclick="navigateTo('quiz-menu-screen')">
+                <div class="icon">🎮</div>
+                <h3>Aktiviti Interaktif</h3>
+                <div class="arabic-title ar-text">الأنشطة</div>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="notes-menu-screen" class="screen">
+        <div class="header-nav">
+            <button class="btn-back" onclick="navigateTo('main-menu-screen')">🔙 Menu Utama</button>
+            <h2 class="ar-text" style="margin:0;">الملاحظات</h2>
+        </div>
+
+        <div class="notes-grid">
+            <div class="note-category-btn" onclick="showNoteContent('dhomir')">
+                <span class="arabic-text">الضَّمَائِرُ</span><br><strong>Kata Ganti Nama</strong>
+            </div>
+            <div class="note-category-btn" onclick="showNoteContent('madi')">
+                <span class="arabic-text">الفِعْلُ المَاضِي</span><br><strong>Kata Kerja Lampau</strong>
+            </div>
+            <div class="note-category-btn" onclick="showNoteContent('mudari')">
+                <span class="arabic-text">الفِعْلُ المُضَارِعُ</span><br><strong>Kata Kerja Sekarang/Akan Datang</strong>
+            </div>
+            <div class="note-category-btn" onclick="showNoteContent('amr')">
+                <span class="arabic-text">الفِعْلُ الْأَمْرِ</span><br><strong>Kata Kerja Arahan</strong>
+            </div>
+        </div>
+
+        <div id="note-display-container" class="content-box" style="display:none; margin-top:25px;">
+            <div id="note-dynamic-content"></div>
+        </div>
+    </section>
+
+
+    <section id="video-screen" class="screen">
+        <button class="btn-back" onclick="navigateTo('main-menu-screen')">🔙 Menu Utama</button>
+        <div class="content-box">
+            <h2 class="ar-text">الفيديو التعليمي</h2>
+            <p style="text-align:center; margin-bottom:15px;">Tonton video animasi di bawah untuk memahami konsep Tasrif.</p>
+            
+            <div class="video-wrapper">
+                <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Tasrif Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="quiz-menu-screen" class="screen">
+        <button class="btn-back" onclick="navigateTo('main-menu-screen')">🔙 Menu Utama</button>
+        <h2 class="ar-text">الأنشطة والألعاب</h2>
+        <p style="margin-bottom:20px; font-weight:bold; color:white; text-shadow:1px 1px 2px #000;">Pilih Tahap Cabaran Anda:</p>
+
+        <div class="level-selection-container">
+            <div class="level-btn" onclick="startQuiz(1)">
+                <div>
+                    <h3>Tahap 1 (المستوى ١)</h3>
+                    <small>Pilihan Tunggal (Padanan Dhomir & Kata Kerja)</small>
+                </div>
+                <span style="font-size:2rem;">⭐</span>
+            </div>
+            <div class="level-btn" onclick="startQuiz(2)">
+                <div>
+                    <h3>Tahap 2 (المستوى ٢)</h3>
+                    <small>Isi Tempat Kosong dalam Ayat</small>
+                </div>
+                <span style="font-size:2rem;">⭐⭐</span>
+            </div>
+            <div class="level-btn" onclick="startQuiz(3)">
+                <div>
+                    <h3>Tahap 3 (المستوى ٣)</h3>
+                    <small>Benar atau Salah (صحيح / خطأ)</small>
+                </div>
+                <span style="font-size:2rem;">⭐⭐⭐</span>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="quiz-play-screen" class="screen">
+        <div class="quiz-container">
+            <div class="quiz-header">
+                <span id="quiz-level-title">Tahap 1</span>
+                <span id="quiz-score-live">Skor: 0</span>
+                <span id="quiz-progress">Soalan: 1/5</span>
+            </div>
+
+            <div class="question-box id-soalan">
+                <p id="question-text-ms" style="font-size:1.1rem; margin-bottom:10px; color:#555;"></p>
+                <p id="question-text-ar" class="arabic-text" style="font-size:2.2rem; font-weight:bold;"></p>
+            </div>
+
+            <div class="options-grid" id="quiz-options-container">
+                </div>
+        </div>
+    </section>
+
+
+    <section id="quiz-result-screen" class="screen">
+        <div class="content-box quiz-result-box">
+            <h2 id="result-status-title" style="font-size:2rem; color:#27ae60;">تهنئة! Tahniah!</h2>
+            <p id="result-status-msg" class="arabic-text" style="margin:10px 0; color:#2980b9;">بالتوفيق والنجاح</p>
+            <p>Anda telah menyelesaikan tugasan tahap ini.</p>
+            
+            <div class="score-circle" id="final-score-box">0/0</div>
+
+            <div class="result-actions">
+                <button class="btn-main" style="padding:10px 20px; font-size:1.1rem;" onclick="restartCurrentLevel()">Cuba Lagi</button>
+                <button class="btn-main" style="padding:10px 20px; font-size:1.1rem; background:var(--secondary-accent); color:white;" onclick="navigateTo('quiz-menu-screen')">Tukar Tahap</button>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer-space"></div>
+    <div class="hills"></div>
+
+    <script>
+        /* --------------------------------------------------------------------------
+           A. DATA SET PENDIDIKAN (REPOSITORY KANDUNGAN I-SMART TASRIF)
+           -------------------------------------------------------------------------- */
+        const dhomirData = [
+            { dhomir: "هُوَ", maksud: "Dia (1 lelaki)", bil: "1 orang", jantina: "مذكر", madi: "فَعَلَ", mudari: "يَفْعَلُ" },
+            { dhomir: "هُمَا", maksud: "Mereka (2 lelaki)", bil: "2 orang", jantina: "مذكر", madi: "فَعَلَا", mudari: "يَفْعَلَانِ" },
+            { dhomir: "هُمْ", maksud: "Mereka (Jamak >2 lelaki)", bil: "Jamak >2", jantina: "مذكر", madi: "فَعَلُوا", mudari: "يَفْعَلُونَ" },
+            { dhomir: "هِيَ", maksud: "Dia (1 perempuan)", bil: "1 orang", jantina: "مؤنث", madi: "فَعَلَتْ", mudari: "تَفْعَلُ" },
+            { dhomir: "هُمَا (م)", maksud: "Mereka (2 perempuan)", bil: "2 orang", jantina: "مؤنث", madi: "فَعَلَتَا", mudari: "تَفْعَلَانِ" },
+            { dhomir: "هُنَّ", maksud: "Mereka (Jamak >2 perempuan)", bil: "Jamak >2", jantina: "مؤنث", madi: "فَعَلْنَ", mudari: "يَفْعَلْنَ" },
+            { dhomir: "أَنْتَ", maksud: "Kamu (1 lelaki)", bil: "1 orang", jantina: "مذكر", madi: "فَعَلْتَ", mudari: "تَفْعَلُ" },
+            { dhomir: "أَنْتُمَا", maksud: "Kamu (2 lelaki)", bil: "2 orang", jantina: "مذكر", madi: "فَعَلْتُمَا", mudari: "تَفْعَلَانِ" },
+            { dhomir: "أَنْتُمْ", maksud: "Kamu semua (>2 lelaki)", bil: "Jamak >2", jantina: "مذكر", madi: "فَعَلْتُمْ", mudari: "تَفْعَلُونَ" },
+            { dhomir: "أَنْتِ", maksud: "Kamu (1 perempuan)", bil: "1 orang", jantina: "مؤنث", madi: "فَعَلْتِ", mudari: "تَفْعَلِينَ" },
+            { dhomir: "أَنْتُمَا (م)", maksud: "Kamu (2 perempuan)", bil: "2 orang", jantina: "مؤنث", madi: "فَعَلْتُمَا", mudari: "تَفْعَلَانِ" },
+            { dhomir: "أَنْتُنَّ", maksud: "Kamu semua (>2 perempuan)", bil: "Jamak >2", jantina: "مؤنث", madi: "فَعَلْتُنَّ", mudari: "تَفْعَلْنَ" },
+            { dhomir: "أَنَا", maksud: "Saya", bil: "1 orang", jantina: "مذكر & مؤنث", madi: "فَعَلْتُ", mudari: "أَفْعَلُ" },
+            { dhomir: "نَحْنُ", maksud: "Kami/Kita", bil: "Jamak >2", jantina: "مذكر & مؤنث", madi: "فَعَلْنَا", mudari: "نَفْعَلُ" }
+        ];
+
+        const quizRepository = {
+            level1: [
+                { qMs: "Pilih Kata Ganti Nama (Dhomir) yang sepadan:", qAr: "كَتَبْتَ", options: ["أَنْتَ", "أَنَا", "أَنْتُمْ", "هُوَ"], correct: "أَنْتَ" },
+                { qMs: "Pilih Kata Ganti Nama (Dhomir) yang sepadan:", qAr: "فَعَلُوا", options: ["هُمْ", "هُوَ", "هِيَ", "أَنْتِ"], correct: "هُمْ" },
+                { qMs: "Pilih Kata Ganti Nama (Dhomir) yang sepadan:", qAr: "أَفْعَلُ", options: ["أَنَا", "نَحْنُ", "أَنْتَ", "هُنَّ"], correct: "أَنَا" },
+                { qMs: "Pilih Kata Ganti Nama (Dhomir) yang sepadan:", qAr: "تَفْعَلِينَ", options: ["أَنْتِ", "أَنْتَ", "هِيَ", "هُمَا"], correct: "أَنْتِ" },
+                { qMs: "Pilih Kata Ganti Nama (Dhomir) yang sepadan:", qAr: "نَفْعَلُ", options: ["نَحْنُ", "أَنَا", "أَنْتُمْ", "هُمْ"], correct: "نَحْنُ" }
+            ],
+            level2: [
+                { qMs: "Isi tempat kosong dengan perkataan yang betul:", qAr: "أَنَا __________ الدَّرْسَ", options: ["كَتَبْتُ", "دَخَلُوا", "خَرَجَتْ", "يَكْتُبُونَ"], correct: "كَتَبْتُ" },
+                { qMs: "Isi tempat kosong dengan perkataan yang betul:", qAr: "الطُّلابُ __________ إِلَى المَلْعَبِ", options: ["ذَهَبُوا", "ذَهَبَتْ", "ذَهَبْتَ", "أَذْهَبُ"], correct: "ذَهَبُوا" },
+                { qMs: "Isi tempat kosong dengan perkataan yang betul:", qAr: "أَنْتَ __________ الطَّعَامَ الآنَ", options: ["تَأْكُلُ", "أَأْكُلُ", "يَأْكُلُونَ", "أَكَلْتُ"], correct: "تَأْكُلُ" },
+                { qMs: "Isi tempat kosong dengan perkataan yang betul:", qAr: "فَاطِمَةُ __________ مِنَ المَدْرَسَةِ أَمْسِ", options: ["رَجَعَتْ", "رَجَعْتُ", "رَجَعُوا", "تَرْجِعُ"], correct: "رَجَعَتْ" },
+                { qMs: "Isi tempat kosong dengan perkataan yang betul:", qAr: "يَا تِلْمِيذُ، هَلْ __________ الرِّسَالَةَ؟", options: ["كَتَبْتَ", "كَتَبْتِ", "كَتَبُوا", "كَتَبْنَا"], correct: "كَتَبْتَ" }
+            ],
+            level3: [
+                { qMs: "Adakah struktur ayat tasrif ini BETUL atau SALAH?", qAr: "أَنَا كَتَبْتُ الدَّرْسَ", options: ["صحيح", "خطأ"], correct: "صحيح" },
+                { qMs: "Adakah struktur ayat tasrif ini BETUL atau SALAH?", qAr: "هُوَ ذَهَبُوا إِلَى المَسْجِدِ", options: ["صحيح", "خطأ"], correct: "خطأ" },
+                { qMs: "Adakah struktur ayat tasrif ini BETUL atau SALAH?", qAr: "الطَّالِبَاتُ يَكْتُبْنَ الفَرْضَ", options: ["صحيح", "خطأ"], correct: "صحيح" },
+                { qMs: "Adakah struktur ayat tasrif ini BETUL atau SALAH?", qAr: "أَنْتِ شَرِبْتَ المَاءَ", options: ["صحيح", "خطأ"], correct: "خطأ" },
+                { qMs: "Adakah struktur ayat tasrif ini BETUL atau SALAH?", qAr: "نَحْنُ نَلْعَبُ كُرَةَ القَدَمِ", options: ["صحيح", "خطأ"], correct: "صحيح" }
+            ]
+        };
+
+
+        /* --------------------------------------------------------------------------
+           B. ENGINE PENGURUSAN NAVIGATION SPA
+           -------------------------------------------------------------------------- */
+        function navigateTo(screenId) {
+            // Sembunyikan semua skrin
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => screen.classList.remove('active'));
+
+            // Paparkan skrin sasaran
+            const targetScreen = document.getElementById(screenId);
+            if(targetScreen) {
+                targetScreen.classList.add('active');
+            }
+
+            // Aturan keselamatan tambahan sekiranya keluar dari menu nota
+            if(screenId !== 'notes-menu-screen') {
+                document.getElementById('note-display-container').style.display = 'none';
+            }
+        }
+
+
+        /* --------------------------------------------------------------------------
+           C. LOGIK MODUL NOTA (INTERAKTIF & STATIK)
+           -------------------------------------------------------------------------- */
+        function showNoteContent(category) {
+            const container = document.getElementById('note-display-container');
+            const innerDiv = document.getElementById('note-dynamic-content');
+            container.style.display = 'block';
+            
+            let htmlContent = "";
+
+            if(category === 'dhomir') {
+                htmlContent = `
+                    <h3 class="ar-text">جَدْوَلُ الضَّمَائِرِ (Kata Ganti Nama)</h3>
+                    <p style="margin-bottom:15px; text-align:center;">Klik tab <strong>الماضي</strong> atau <strong>المضارع</strong> untuk melihat perubahan tasrif kata kerja asas.</p>
+                    <div class="dhomir-cards-container">
+                `;
+                
+                dhomirData.forEach((item, idx) => {
+                    htmlContent += `
+                        <div class="dhomir-interactive-card">
+                            <div class="dhomir-main-info">
+                                <span class="arabic-text" style="color:var(--secondary-accent); font-weight:bold;">${item.dhomir}</span><br>
+                                <span style="font-size:0.95rem; font-weight:bold;">${item.maksud}</span><br>
+                                <small style="color:#7f8c8d;">${item.bil} | ${item.jantina}</small>
+                            </div>
+                            <div class="card-tabs">
+                                <button class="tab-btn active" id="tab-madi-${idx}" onclick="toggleCardTab(${idx}, 'madi')">الماضي</button>
+                                <button class="tab-btn" id="tab-mudari-${idx}" onclick="toggleCardTab(${idx}, 'mudari')">المضارع</button>
+                            </div>
+                            <div class="tab-display-value ar-text" id="tab-val-${idx}">${item.madi}</div>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += `</div>`;
+            } 
+            else if(category === 'madi') {
+                htmlContent = `
+                    <h3 class="ar-text">الفِعْلُ المَاضِي (Kata Kerja Lampau)</h3>
+                    <p style="margin-bottom:10px;">Menunjukkan perbuatan yang telah dilakukan pada masa lalu.</p>
+                    <table class="tasrif-table">
+                        <thead>
+                            <tr>
+                                <th>الضَّمِير (Dhomir)</th>
+                                <th>الفِعْل المَاضِي (Tasrif)</th>
+                                <th>Maksud Perubahan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>هُوَ</td><td class="arabic-text">فَعَلَ</td><td>Dia telah membuat</td></tr>
+                            <tr><td>هُمَا</td><td class="arabic-text">فَعَلَا</td><td>Mereka berdua telah membuat</td></tr>
+                            <tr><td>هُمْ</td><td class="arabic-text">فَعَلُوا</td><td>Mereka semua telah membuat</td></tr>
+                            <tr><td>أَنْتَ</td><td class="arabic-text">فَعَلْتَ</td><td>Kamu telah membuat</td></tr>
+                            <tr><td>أَنَا</td><td class="arabic-text">فَعَلْتُ</td><td>Saya telah membuat</td></tr>
+                            <tr><td>نَحْنُ</td><td class="arabic-text">فَعَلْنَا</td><td>Kami telah membuat</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            } 
+            else if(category === 'mudari') {
+                htmlContent = `
+                    <h3 class="ar-text">الفِعْلُ المُضَارِعُ (Kata Kerja Sekarang/Akan Datang)</h3>
+                    <p style="margin-bottom:10px;">Menunjukkan perbuatan yang sedang atau akan dilakukan.</p>
+                    <table class="tasrif-table">
+                        <thead>
+                            <tr>
+                                <th>الضَّمِير (Dhomir)</th>
+                                <th>الفِعْل المُضَارِع (Tasrif)</th>
+                                <th>Maksud Perubahan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>هُوَ</td><td class="arabic-text">يَفْعَلُ</td><td>Dia sedang membuat</td></tr>
+                            <tr><td>هُمَا</td><td class="arabic-text">يَفْعَلَانِ</td><td>Mereka berdua sedang membuat</td></tr>
+                            <tr><td>هُمْ</td><td class="arabic-text">يَفْعَلُونَ</td><td>Mereka semua sedang membuat</td></tr>
+                            <tr><td>أَنْتَ</td><td class="arabic-text">تَفْعَلُ</td><td>Kamu sedang membuat</td></tr>
+                            <tr><td>أَنَا</td><td class="arabic-text">أَفْعَلُ</td><td>Saya sedang membuat</td></tr>
+                            <tr><td>نَحْنُ</td><td class="arabic-text">نَفْعَلُ</td><td>Kami sedang membuat</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            } 
+            else if(category === 'amr') {
+                htmlContent = `
+                    <h3 class="ar-text">الفِعْلُ الْأَمْرِ (Kata Kerja Arahan)</h3>
+                    <p style="margin-bottom:10px;">Terhad kepada golongan <strong>المخاطب</strong> (orang kedua / orang yang dilawan bercakap) sahaja.</p>
+                    <table class="tasrif-table">
+                        <thead>
+                            <tr>
+                                <th>Dhomir Kedua</th>
+                                <th>الفِعْل الأَمْر (Arahan)</th>
+                                <th>Contoh Ayat & Visual Skenario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>أَنْتَ (1L)</td><td class="arabic-text">اُخْرُجْ</td><td class="arabic-text">اُخْرُجْ مِنَ الفَصْلِ!</td></tr>
+                            <tr><td>أَنْتُمَا (2L/P)</td><td class="arabic-text">اُخْرُجَا</td><td class="amr-example">!اخْرُجَا مِنَ Edah, يَا تِلْمِيذَانِ <br><small>(Wahai dua orang murid, keluarlah kamu berdua dari kelas!)</small></td></tr>
+                            <tr><td>أَنْتُمْ (Jamak L)</td><td class="arabic-text">اُخْرُجُوا</td><td class="arabic-text">يَا أَيُّهَا الطُّلَّابُ، اُخْرُجُوا!</td></tr>
+                            <tr><td>أَنْتِ (1P)</td><td class="arabic-text">اُخْرُجِي</td><td class="arabic-text">اُخْرُجِي يَا عَائِشَةُ!</td></tr>
+                            <tr><td>أَنْتُنَّ (Jamak P)</td><td class="arabic-text">اُخْرُجْنَ</td><td class="arabic-text">يَا تِلْمِيذَاتُ، اُخْرُجْنَ!</td></tr>
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            innerDiv.innerHTML = htmlContent;
+            
+            // Scroll automatik ke bahagian nota supaya pengguna perasan paparan bawah
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Fungsi penukaran Tab Kecil dalam Kad Dhomir
+        function toggleCardTab(index, jenis) {
+            const btnMadi = document.getElementById(`tab-madi-${index}`);
+            const btnMudari = document.getElementById(`tab-mudari-${index}`);
+            const displayVal = document.getElementById(`tab-val-${index}`);
+            
+            if(jenis === 'madi') {
+                btnMadi.classList.add('active');
+                btnMudari.classList.remove('active');
+                displayVal.innerText = dhomirData[index].madi;
+            } else {
+                btnMadi.classList.remove('active');
+                btnMudari.classList.add('active');
+                displayVal.innerText = dhomirData[index].mudari;
+            }
+        }
+
+
+        /* --------------------------------------------------------------------------
+           D. LOGIK KUIZ INTERAKTIF & AUDIO SIMULASI
+           -------------------------------------------------------------------------- */
+        let currentLevel = 1;
+        let currentQuestions = [];
+        let questionIndex = 0;
+        let score = 0;
+
+        // Audio WEB API alternatif menggantikan fail .mp3 fizikal luaran bagi menjamin kestabilan
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'correct') {
+                    // Bunyi 'Ting' bernada tinggi ceria
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);  // A5
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                } else {
+                    // Bunyi 'Buzz' bernada rendah bersahaja
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(130, ctx.currentTime);  // C3
+                    osc.frequency.setValueAtTime(110, ctx.currentTime + 0.08); // A2
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                }
+            } catch (e) {
+                console.log("Audio API tidak disokong pelayar web ini.");
+            }
+        }
+
+        function startQuiz(level) {
+            currentLevel = level;
+            score = 0;
+            questionIndex = 0;
+            
+            // Mengambil salinan soalan berdasarkan tahap yang dipilih
+            if(level === 1) currentQuestions = [...quizRepository.level1];
+            else if(level === 2) currentQuestions = [...quizRepository.level2];
+            else if(level === 3) currentQuestions = [...quizRepository.level3];
+
+            // Susun rawak soalan (Shuffle) untuk kualiti pendidikan optimum
+            currentQuestions.sort(() => Math.random() - 0.5);
+
+            document.getElementById('quiz-level-title').innerText = `Tahap ${level}`;
+            document.getElementById('quiz-score-live').innerText = `Skor: ${score}`;
+            
+            navigateTo('quiz-play-screen');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            if(questionIndex >= currentQuestions.length) {
+                endQuiz();
+                return;
+            }
+
+            document.getElementById('quiz-progress').innerText = `Soalan: ${questionIndex + 1}/${currentQuestions.length}`;
+            
+            const currentQ = currentQuestions[questionIndex];
+            document.getElementById('question-text-ms').innerText = currentQ.qMs;
+            document.getElementById('question-text-ar').innerText = currentQ.qAr;
+
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = "";
+
+            // Bina pilihan jawapan
+            currentQ.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, opt, currentQ.correct);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedButton, chosenOption, correctOption) {
+            // Mengelakkan pengguna menekan berulang kali sementara animasi diproses
+            const allButtons = document.querySelectorAll('.option-btn');
+            allButtons.forEach(b => b.disabled = true);
+
+            if(chosenOption === correctOption) {
+                score += 20; // 5 soalan x 20 markah = 100 markah penuh
+                selectedButton.classList.add('correct-flash');
+                playSound('correct');
+                document.getElementById('quiz-score-live').innerText = `Skor: ${score}`;
+            } else {
+                selectedButton.classList.add('incorrect-flash');
+                playSound('buzz');
+                
+                // Cari butang yang sepatutnya betul untuk memberi petunjuk visual kepada murid
+                allButtons.forEach(b => {
+                    if(b.innerText === correctOption) {
+                        b.style.backgroundColor = "#2ecc71";
+                        b.style.color = "white";
+                    }
+                });
+            }
+
+            // Beri tempoh 1.2 saat untuk murid melihat maklum balas jawapan sebelum soalan seterusnya
+            setTimeout(() => {
+                questionIndex++;
+                renderQuestion();
+            }, 1200);
+        }
+
+        function endQuiz() {
+            navigateTo('quiz-result-screen');
+            
+            const finalScoreBox = document.getElementById('final-score-box');
+            finalScoreBox.innerText = `${score}`;
+
+            const title = document.getElementById('result-status-title');
+            const msg = document.getElementById('result-status-msg');
+
+            if(score >= 80) {
+                title.innerText = "تهنئة! Mumtaz!";
+                title.style.color = "#27ae60";
+                msg.innerText = "بالتوفيق والنجاح (Semoga Cemerlang Berterusan)";
+            } else if(score >= 40) {
+                title.innerText = "جَيِّد! Maqbul!";
+                title.style.color = "#e67e22";
+                msg.innerText = "حَاوِلْ مَرَّةً أُخْرَى (Satu Usaha Yang Baik!)";
+            } else {
+                title.innerText = "إِجْتَهِدْ! Cuba Lagi!";
+                title.style.color = "#e74c3c";
+                msg.innerText = "لا تَيْأَسْ (Jangan Putus Asa, Ayuh Belajar Lagi!)";
+            }
+        }
+
+        function restartCurrentLevel() {
+            startQuiz(currentLevel);
+        }
+    </script>
+</body>
+</html>
